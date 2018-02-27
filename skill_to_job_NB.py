@@ -14,38 +14,49 @@ jieba.enable_parallel(4)
 jieba.load_userdict("/Users/janny/Documents/Bello_work/programing/skill_to_job/jieba_dict/hardskill_dict.txt")
 #words=pseg.cut("他来到了投资咨询 android app开发互联网产品运营网易杭研大厦")
 
-path = "/Users/janny/Documents/Bello_work/programing/skill_to_job/JDs/技术/总的技术/总的测试" #文件夹目录  
-files= os.listdir(path)
+PATH_ROOT = "/Users/janny/Documents/Bello_work/programing/skill_to_job/JDs/技术/总的技术" #文件夹目录  
+files_root= os.listdir(PATH_ROOT)
 
+dir_path=[]
+for file in files_root: #遍历文件夹
+    if not file.startswith('.'):
+        dir_path.append(PATH_ROOT+"/"+file)
+
+
+#path = "/Users/janny/Documents/Bello_work/programing/skill_to_job/JDs/技术/总的技术/总的测试" #文件夹目录  
 content=[]
-for file in files: #遍历文件夹  
-     if not os.path.isdir(file): #判断是否是文件夹，不是文件夹才打开  
-          #f = open(path+"/"+file); #打开文件  
-          try:
-              f=open(path+"/"+file,'r')
-              str_temp = '' 
-              for line in f: #遍历文件，一行行遍历，读取文本  
-                  str_temp += line.strip()  
-              content.append(str_temp) #每个文件的文本存到list中  
-          except:
-              continue
+content_len=[]
+for path in dir_path:
+    files= os.listdir(path)
+    
+    content_single=[]
+    for file in files: #遍历文件夹 
+         if not os.path.isdir(file): #判断是否是文件夹，不是文件夹才打开  
+              try:
+                  f=open(path+"/"+file,'r')
+                  str_temp = '' 
+                  for line in f: #遍历文件，一行行遍历，读取文本  
+                      str_temp += line.strip()  
+                  content_single.append(str_temp) #每个文件的文本存到list中  
+              except:
+                  continue
+    content+=content_single
+    content_len.append(len(content_single)) 
           
-nski_data1=[]
+all_text=[]
 for line in content:
     line_cut_nski=''
     content_pseg=pseg.cut(line)          
     for word,pos in content_pseg:
         if pos=='nski':
             line_cut_nski+=word+' '
-    nski_data1.append(line_cut_nski)
+    all_text.append(line_cut_nski)
 
-#合并成全部的all_test    
-all_text=nski_dataAI+nski_dataweb
+#制作lable
 y=[]
-for i in range(len(nski_dataAI)):
-    y.append(1)
-for i in range(len(nski_dataweb)):
-    y.append(2)
+for index in range(len(content_len)):
+    for i in range(content_len[index]):
+        y.append(index)
 
 #打乱，all_text 和标签y，用于划分数据集    
 import numpy as np
@@ -96,6 +107,29 @@ from sklearn import metrics
 clf = MultinomialNB(alpha = 0.01)   
 clf.fit(train_data, y_train);  
 preds = clf.predict(test_data);
+#preds = preds.tolist()
+#print ('precision_score:' , metrics.accuracy_score(preds, y_test))
+
 num = 0
-preds = preds.tolist()
-print ('precision_score:' , metrics.accuracy_score(preds, y_test))
+bad_lable=[]
+for i,pred in enumerate(preds):
+    if int(pred) == int(y_test[i]):
+        num += 1
+    else:
+        bad_lable.append(pred)
+print ('precision_score:' + str(float(num) / len(preds)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
